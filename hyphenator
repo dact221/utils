@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+
+import os
+import getopt
+from string import capwords
+
+HELP_MSG = """
+Usage: hyphenator.py [OPTION]... [DIRECTORY]
+Hyphenate all filenames in DIRECTORY (current directory by default).
+
+Options:
+-l  --lowercase        : Convert to lowercase
+-t  --titlecase        : Convert to titlecase
+-d  --no-double-hyphen : Convert '--' to '-'
+-v  --verbose          : Print details
+-h  --help             : Print this help message and exit
+"""
+
+def main(args):
+    
+    opts, args = getopt.getopt(args, 'ltdvh', 
+                                 ['lowercase', 'titlecase', 
+                                  'no-double-hyphen', 'verbose', 
+                                  'help'])
+    opts = dict(opts)
+    
+    if ('-h' or '--help') in opts:
+        print(HELP_MSG)
+        return 0
+    
+    try:
+        os.chdir(*args)
+    except:
+        pass
+    
+    files = os.listdir()
+    if __file__[2:] in files:
+        files.remove(__file__[2:])
+    
+    
+    #  -*- Start of hyphenation -*-
+    
+    ch = [(' ', '-'), 
+          ('_', '-'),
+          ('---', '--')]
+    
+    if ('-d' or '--no-double-hyphen') in opts:
+        ch.append(('--', '-'))
+    
+    new = files.copy()
+    for (o, n) in ch:
+        new = [f.replace(o, n) for f in new]
+    
+    #  -*- End of hyphenation -*-
+    
+    
+    if ('-l' or '--lowercase') in opts:
+        new = [f.lower() for f in new]
+    elif ('-t' or '--titlecase') in opts:
+        new = [capwords(f, '-') for f in new]
+    
+    for (src, dst) in zip(files, new):
+        os.rename(src, dst)
+        if ('-v' or '--verbose') in opts:
+            print(src + ' --> ' + dst)
+    
+    return 0
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(main(sys.argv[1:]))
