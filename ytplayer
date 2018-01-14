@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import subprocess
+
+def main(args):
+
+    if '-h' in args:
+        print("""Usage: ytplayer [OPTION]... [URL]
+YTplayer shows available formats for the YouTube video in URL and asks the user
+for the desired format to play.
+
+YTplayer use youtube-dl to retrieve the list of available formats and mpv to
+play the video.
+
+Options:
+-a  : Only audio formats
+-h  : Print this help message and exit""")
+        return 0
+
+    url = args[-1]
+    completed_process = subprocess.run(['youtube-dl', '-F', url], stdout=subprocess.PIPE)
+    if completed_process.returncode != 0:
+        return 1
+
+    out = completed_process.stdout.decode().splitlines()
+    header = out[4]
+    formats_all = out[5:]
+    if '-a' in args:
+        formats = [x for x in formats_all if 'audio only' in x]
+    else:
+        formats = [x for x in formats_all if 'only' not in x]
+
+    print(header)
+    for x in formats:
+        print(x)
+    fmt_code = input('Enter the code of your desired format: ')
+
+    try:
+        subprocess.run(['mpv', url, '--ytdl-raw-options=format=' + fmt_code])
+    except KeyboardInterrupt:
+        pass
+    else:
+        return 1
+
+    return 0
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(main(sys.argv[1:]))
